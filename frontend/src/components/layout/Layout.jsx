@@ -4,7 +4,7 @@ import {
   Box, Toolbar, Dialog, DialogContent, DialogActions,
   Button, Typography, IconButton, Checkbox, FormControlLabel,
 } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import { Close as CloseIcon, ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
@@ -15,9 +15,10 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // ─── Popup Banner State ───────────────────────────────────────
+  // ─── Popup Banner State (multiple) ──────────────────────────
   const [popupOpen, setPopupOpen] = useState(false);
-  const [popup, setPopup] = useState(null);
+  const [popups, setPopups] = useState([]);
+  const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
   const [dontShowToday, setDontShowToday] = useState(false);
 
   // ─── Footer Banner State ──────────────────────────────────────
@@ -26,35 +27,47 @@ const Layout = ({ children }) => {
   const [footerSpeed, setFooterSpeed] = useState(30);
 
   useEffect(() => {
-    // Load popup banner
+    // Load popup banners (new multi-format or old single format)
     try {
-      const saved = localStorage.getItem('woori_popup_banner');
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data.active) {
-          const dismissed = localStorage.getItem('woori_popup_dismissed');
-          if (dismissed) {
-            const dismissedDate = new Date(dismissed).toDateString();
-            const today = new Date().toDateString();
-            if (dismissedDate !== today) {
-              setPopup(data);
-              setPopupOpen(true);
-            }
-          } else {
-            setPopup(data);
-            setPopupOpen(true);
-          }
-        }
+      let popupData = [];
+      const savedMulti = localStorage.getItem('woori_popup_banners');
+      if (savedMulti) {
+        popupData = JSON.parse(savedMulti);
       } else {
+        const savedSingle = localStorage.getItem('woori_popup_banner');
+        if (savedSingle) {
+          const single = JSON.parse(savedSingle);
+          popupData = [{ ...single, id: 1 }];
+        }
+      }
+
+      // Filter to active popups only
+      const activePopups = popupData.filter((p) => p.active);
+
+      if (activePopups.length > 0) {
+        const dismissed = localStorage.getItem('woori_popup_dismissed');
+        let shouldShow = true;
+        if (dismissed) {
+          const dismissedDate = new Date(dismissed).toDateString();
+          const today = new Date().toDateString();
+          if (dismissedDate === today) shouldShow = false;
+        }
+        if (shouldShow) {
+          setPopups(activePopups);
+          setCurrentPopupIndex(0);
+          setPopupOpen(true);
+        }
+      } else if (!savedMulti && !localStorage.getItem('woori_popup_banner')) {
         // Default popup if none saved
-        setPopup({
+        setPopups([{
+          id: 0,
           active: true,
           title: '2026년 상반기 시니어 프로그램 모집',
           content: '금융컨설팅, 부동산, 창업 등 다양한 프로그램에 참여하세요!',
           imageUrl: '',
           linkUrl: '/programs',
           linkText: '자세히 보기',
-        });
+        }]);
         setPopupOpen(true);
       }
     } catch { /* ignore */ }
@@ -69,7 +82,6 @@ const Layout = ({ children }) => {
       if (saved) {
         setFooterBanners(JSON.parse(saved).filter((b) => b.active && b.text));
       } else {
-        // Default banners
         setFooterBanners([
           { id: 1, text: '📢 2026년 상반기 시니어 프로그램 모집 중! 지금 바로 신청하세요.', active: true },
           { id: 2, text: '💼 신규 채용정보가 등록되었습니다. 채용공고를 확인해보세요!', active: true },
@@ -88,12 +100,26 @@ const Layout = ({ children }) => {
   };
 
   const handlePopupLink = () => {
+    const currentPopup = popups[currentPopupIndex];
     handleClosePopup();
-    if (popup?.linkUrl) {
-      navigate(popup.linkUrl);
+    if (currentPopup?.linkUrl) {
+      navigate(currentPopup.linkUrl);
     }
   };
 
+  const handleNextPopup = () => {
+    if (currentPopupIndex < popups.length - 1) {
+      setCurrentPopupIndex(currentPopupIndex + 1);
+    }
+  };
+
+  const handlePrevPopup = () => {
+    if (currentPopupIndex > 0) {
+      setCurrentPopupIndex(currentPopupIndex - 1);
+    }
+  };
+
+  const currentPopup = popups[currentPopupIndex];
   const bannerText = footerBanners.map((b) => b.text).join('          ');
 
   return (
@@ -151,8 +177,8 @@ const Layout = ({ children }) => {
         )}
       </Box>
 
-      {/* ─── Popup Banner Dialog ──────────────────────────────────── */}
-      {popup && (
+      {/* ─── Popup Banner Dialog (multiple) ────────────────────────── */}
+      {currentPopup && (
         <Dialog
           open={popupOpen}
           onClose={handleClosePopup}
@@ -179,17 +205,17 @@ const Layout = ({ children }) => {
               <CloseIcon sx={{ fontSize: 16 }} />
             </IconButton>
 
-            {popup.imageUrl && (
+            {currentPopup.imageUrl && (
               <Box
                 component="img"
-                src={popup.imageUrl}
+                src={currentPopup.imageUrl}
                 alt="Banner"
                 sx={{ width: '100%', height: 180, objectFit: 'cover' }}
               />
             )}
 
             <DialogContent sx={{ textAlign: 'center', py: 3, px: 3 }}>
-              {!popup.imageUrl && (
+              {!currentPopup.imageUrl && (
                 <Box sx={{
                   width: 60, height: 60, borderRadius: '50%', bgcolor: '#EBF0FA',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -199,17 +225,32 @@ const Layout = ({ children }) => {
                 </Box>
               )}
               <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
-                {popup.title}
+                {currentPopup.title}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                {popup.content}
+                {currentPopup.content}
               </Typography>
             </DialogContent>
 
             <DialogActions sx={{ flexDirection: 'column', px: 3, pb: 2.5, gap: 1.5 }}>
-              {popup.linkText && popup.linkUrl && (
+              {/* Navigation arrows for multiple popups */}
+              {popups.length > 1 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, width: '100%' }}>
+                  <IconButton size="small" onClick={handlePrevPopup} disabled={currentPopupIndex === 0}>
+                    <ArrowBackIcon fontSize="small" />
+                  </IconButton>
+                  <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                    {currentPopupIndex + 1} / {popups.length}
+                  </Typography>
+                  <IconButton size="small" onClick={handleNextPopup} disabled={currentPopupIndex >= popups.length - 1}>
+                    <ArrowForwardIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
+
+              {currentPopup.linkText && currentPopup.linkUrl && (
                 <Button variant="contained" fullWidth onClick={handlePopupLink} sx={{ borderRadius: '8px' }}>
-                  {popup.linkText}
+                  {currentPopup.linkText}
                 </Button>
               )}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>

@@ -30,13 +30,13 @@ const parseTime = (str) => {
 // Helper: detect video source type
 const getVideoType = (url) => {
   if (!url) return 'none';
-  if (url.match(/youtube\.com\/watch|youtu\.be\//)) return 'youtube';
+  if (url.match(/youtube\.com\/watch|youtube\.com\/shorts\/|youtu\.be\//)) return 'youtube';
   if (url.match(/vimeo\.com\//)) return 'vimeo';
   return 'direct';
 };
 
 const getYouTubeId = (url) => {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/)([^&\s?]+)/);
   return match ? match[1] : null;
 };
 
