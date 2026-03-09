@@ -163,10 +163,10 @@ const Layout = ({ children }) => {
             <Box
               sx={{
                 display: 'inline-block',
-                paddingLeft: '100%',
+                whiteSpace: 'nowrap',
                 animation: `footerMarquee ${footerSpeed}s linear infinite`,
                 '@keyframes footerMarquee': {
-                  '0%': { transform: 'translateX(0)' },
+                  '0%': { transform: 'translateX(100vw)' },
                   '100%': { transform: 'translateX(-100%)' },
                 },
               }}
