@@ -13,6 +13,7 @@ import Layout from './components/layout/Layout';
 import AdminLayout from './components/admin/AdminLayout';
 
 // Lazy load pages
+const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const Home = lazy(() => import('./pages/home/Home'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
@@ -65,7 +66,7 @@ const ProtectedRoute = ({ children, roles }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/welcome" replace />;
   }
 
   if (roles && !hasRole(roles)) {
@@ -94,6 +95,15 @@ const AppRoutes = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
+        {/* Landing page - public entry point */}
+        <Route
+          path="/welcome"
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          }
+        />
         {/* Public routes */}
         <Route
           path="/login"

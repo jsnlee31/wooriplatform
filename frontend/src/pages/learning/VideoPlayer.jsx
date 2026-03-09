@@ -26,6 +26,79 @@ import {
 import { coursesAPI } from '../../services/api';
 import CategoryBadge from '../../components/common/CategoryBadge';
 
+// Helper: detect video source type
+const getVideoType = (url) => {
+  if (!url) return 'none';
+  if (url.match(/youtube\.com\/watch|youtu\.be\//)) return 'youtube';
+  if (url.match(/vimeo\.com\//)) return 'vimeo';
+  return 'direct';
+};
+
+// Helper: extract YouTube video ID
+const getYouTubeId = (url) => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  return match ? match[1] : null;
+};
+
+// Helper: extract Vimeo video ID
+const getVimeoId = (url) => {
+  const match = url.match(/vimeo\.com\/(\d+)/);
+  return match ? match[1] : null;
+};
+
+// Embeddable video component that handles YouTube, Vimeo, and direct video URLs
+const VideoEmbed = ({ url, videoRef, onTimeUpdate, onEnded, title }) => {
+  const type = getVideoType(url);
+
+  if (type === 'youtube') {
+    const videoId = getYouTubeId(url);
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+        title={title || 'Video'}
+        style={{ width: '100%', height: '100%', border: 'none' }}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+
+  if (type === 'vimeo') {
+    const videoId = getVimeoId(url);
+    return (
+      <iframe
+        src={`https://player.vimeo.com/video/${videoId}?badge=0&autopause=0`}
+        title={title || 'Video'}
+        style={{ width: '100%', height: '100%', border: 'none' }}
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  }
+
+  // Direct video file (mp4, etc.)
+  return (
+    <video
+      ref={videoRef}
+      src={url}
+      controls
+      style={{ width: '100%', height: '100%' }}
+      onTimeUpdate={onTimeUpdate}
+      onEnded={onEnded}
+    />
+  );
+};
+
+// Sample free demo videos for mock data
+const DEMO_VIDEOS = [
+  'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+  'https://www.youtube.com/watch?v=9bZkp7q19f0',
+  'https://www.youtube.com/watch?v=kJQP7kiw5Fk',
+  'https://www.youtube.com/watch?v=RgKAFK5djSk',
+  'https://www.youtube.com/watch?v=JGwWNGJdvx8',
+];
+
 const VideoPlayer = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -40,13 +113,14 @@ const VideoPlayer = () => {
     const fetchCourse = async () => {
       try {
         const response = await coursesAPI.getById(id);
-        setCourse(response.data.course);
-        if (response.data.course.lessons?.length > 0) {
-          setCurrentLesson(response.data.course.lessons[0]);
+        const courseData = response.data.course;
+        setCourse(courseData);
+        if (courseData.lessons?.length > 0) {
+          setCurrentLesson(courseData.lessons[0]);
         }
       } catch (error) {
         console.error('Failed to fetch course:', error);
-        // Mock data
+        // Mock data with playable demo videos
         const mockCourse = {
           id,
           title: '은퇴 후 스마트한 자산 관리',
@@ -58,12 +132,12 @@ const VideoPlayer = () => {
           created_at: '2024.05.15',
           progress: 60,
           lessons: [
-            { id: 1, title: '1강. 은퇴 자금 현황 분석', duration: '15:30', completed: true },
-            { id: 2, title: '2강. 연금 활용 전략', duration: '18:45', completed: true },
-            { id: 3, title: '3강. 투자 포트폴리오 구성', duration: '22:00', completed: false },
-            { id: 4, title: '4강. 부동산 자산 관리', duration: '20:15', completed: false },
-            { id: 5, title: '5강. 세금 및 상속 계획', duration: '25:00', completed: false },
-            { id: 6, title: '6강. Q&A 및 사례 분석', duration: '33:30', completed: false },
+            { id: 1, title: '1강. 은퇴 자금 현황 분석', duration: '15:30', completed: true, video_url: DEMO_VIDEOS[0] },
+            { id: 2, title: '2강. 연금 활용 전략', duration: '18:45', completed: true, video_url: DEMO_VIDEOS[1] },
+            { id: 3, title: '3강. 투자 포트폴리오 구성', duration: '22:00', completed: false, video_url: DEMO_VIDEOS[2] },
+            { id: 4, title: '4강. 부동산 자산 관리', duration: '20:15', completed: false, video_url: DEMO_VIDEOS[3] },
+            { id: 5, title: '5강. 세금 및 상속 계획', duration: '25:00', completed: false, video_url: DEMO_VIDEOS[4] },
+            { id: 6, title: '6강. Q&A 및 사례 분석', duration: '33:30', completed: false, video_url: DEMO_VIDEOS[5] },
           ],
         };
         setCourse(mockCourse);
@@ -94,15 +168,15 @@ const VideoPlayer = () => {
         lesson_id: currentLesson.id,
         completed: true,
       });
-      // Update local state
-      if (course) {
-        const updatedLessons = course.lessons.map((l) =>
-          l.id === currentLesson.id ? { ...l, completed: true } : l
-        );
-        setCourse({ ...course, lessons: updatedLessons });
-      }
     } catch (error) {
-      console.error('Failed to update progress:', error);
+      // Silently handle - update local state anyway
+    }
+    // Update local state
+    if (course) {
+      const updatedLessons = course.lessons.map((l) =>
+        l.id === currentLesson.id ? { ...l, completed: true } : l
+      );
+      setCourse({ ...course, lessons: updatedLessons });
     }
   };
 
@@ -131,6 +205,9 @@ const VideoPlayer = () => {
       </Box>
     );
   }
+
+  const videoType = currentLesson?.video_url ? getVideoType(currentLesson.video_url) : 'none';
+  const isEmbedded = videoType === 'youtube' || videoType === 'vimeo';
 
   return (
     <Box>
@@ -168,13 +245,12 @@ const VideoPlayer = () => {
                 }}
               >
                 {currentLesson?.video_url ? (
-                  <video
-                    ref={videoRef}
-                    src={currentLesson.video_url}
-                    controls
-                    style={{ width: '100%', height: '100%' }}
+                  <VideoEmbed
+                    url={currentLesson.video_url}
+                    videoRef={videoRef}
                     onTimeUpdate={handleTimeUpdate}
                     onEnded={handleVideoEnd}
+                    title={currentLesson.title}
                   />
                 ) : (
                   <Box sx={{ textAlign: 'center', color: 'white' }}>
@@ -183,15 +259,15 @@ const VideoPlayer = () => {
                       {currentLesson?.title || '강의를 선택해주세요'}
                     </Typography>
                     <Typography variant="body2" sx={{ opacity: 0.7, mt: 1 }}>
-                      (데모: 실제 영상은 준비 중입니다)
+                      (영상이 등록되지 않았습니다)
                     </Typography>
                   </Box>
                 )}
               </Box>
             </Box>
 
-            {/* Current Lesson Progress */}
-            {currentLesson && (
+            {/* Current Lesson Progress - only for direct video */}
+            {currentLesson && !isEmbedded && (
               <LinearProgress
                 variant="determinate"
                 value={progress}
@@ -263,7 +339,7 @@ const VideoPlayer = () => {
               <Divider sx={{ my: 2 }} />
 
               <List disablePadding>
-                {course.lessons?.map((lesson, index) => (
+                {course.lessons?.map((lesson) => (
                   <ListItem key={lesson.id} disablePadding>
                     <ListItemButton
                       selected={currentLesson?.id === lesson.id}
@@ -290,7 +366,6 @@ const VideoPlayer = () => {
                             fontWeight={currentLesson?.id === lesson.id ? 600 : 400}
                             sx={{
                               color: lesson.completed ? 'text.secondary' : 'text.primary',
-                              textDecoration: lesson.completed ? 'none' : 'none',
                             }}
                           >
                             {lesson.title}

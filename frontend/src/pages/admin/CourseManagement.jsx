@@ -14,6 +14,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import VideoEditorDialog from '../../components/admin/VideoEditorDialog';
 
 const initialCourses = [
   { id: 1, title: '은퇴 후 스마트한 자산 관리', category: '금융', instructor: '김강사', duration: '2시간 15분', lessons: 6, status: '게시중', views: 1234, enrollments: 89, description: '은퇴 후 자산을 효율적으로 관리하는 방법을 배웁니다.', videoType: 'url', videoUrl: 'https://www.youtube.com/watch?v=example1', coverImage: null },
@@ -51,6 +52,9 @@ const CourseManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  const [videoEditorOpen, setVideoEditorOpen] = useState(false);
+  const [videoSegments, setVideoSegments] = useState(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -179,6 +183,26 @@ const CourseManagement = () => {
       ...prev, videoFile: file, videoFileName: file.name,
       videoFileSize: sizeMB < 1 ? `${(sizeMB * 1024).toFixed(0)}KB` : `${sizeMB.toFixed(1)}MB`,
     }));
+    // Open video editor after file selection
+    setVideoEditorOpen(true);
+  };
+
+  const handleOpenVideoEditor = () => {
+    setVideoEditorOpen(true);
+  };
+
+  const handleSaveVideoSegments = (trimData) => {
+    setVideoSegments(trimData);
+    // Update form duration from trim data
+    if (trimData.totalDuration > 0) {
+      const mins = Math.floor(trimData.totalDuration / 60);
+      const secs = Math.floor(trimData.totalDuration % 60);
+      const durationStr = mins >= 60
+        ? `${Math.floor(mins / 60)}시간 ${mins % 60}분`
+        : `${mins}분 ${secs}초`;
+      setForm((prev) => ({ ...prev, duration: durationStr }));
+    }
+    showSuccess(`${trimData.segments.length}개 세그먼트가 저장되었습니다`);
   };
 
   const handleCoverImageChange = (e) => {
@@ -448,19 +472,47 @@ const CourseManagement = () => {
 
             {form.videoType === 'url' ? (
               <Grid item xs={12}>
-                <TextField fullWidth label="영상 URL" placeholder="https://youtube.com/watch?v=..."
-                  value={form.videoUrl} onChange={(e) => setForm((p) => ({ ...p, videoUrl: e.target.value }))}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><LinkIcon fontSize="small" /></InputAdornment> }} />
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                  <TextField fullWidth label="영상 URL" placeholder="https://youtube.com/watch?v=..."
+                    value={form.videoUrl} onChange={(e) => setForm((p) => ({ ...p, videoUrl: e.target.value }))}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><LinkIcon fontSize="small" /></InputAdornment> }} />
+                  <Button
+                    variant="outlined"
+                    onClick={handleOpenVideoEditor}
+                    disabled={!form.videoUrl}
+                    startIcon={<PlayIcon />}
+                    sx={{ mt: 0.5, minWidth: 130, whiteSpace: 'nowrap' }}
+                  >
+                    Edit / Trim
+                  </Button>
+                </Box>
+                {videoSegments && (
+                  <Chip label={`${videoSegments.segments.length} segment(s) saved`} color="success" size="small" sx={{ mt: 1 }} />
+                )}
               </Grid>
             ) : (
               <Grid item xs={12}>
                 <input type="file" accept="video/*" ref={videoInputRef} hidden onChange={handleVideoFileChange} />
-                <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => videoInputRef.current?.click()}
-                  sx={{ mr: 2 }}>
-                  영상 파일 선택
-                </Button>
-                {form.videoFileName && (
-                  <Chip label={`${form.videoFileName} (${form.videoFileSize})`} onDelete={() => setForm((p) => ({ ...p, videoFile: null, videoFileName: '', videoFileSize: '' }))} sx={{ mt: 1 }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => videoInputRef.current?.click()}>
+                    영상 파일 선택
+                  </Button>
+                  {form.videoFileName && (
+                    <>
+                      <Chip label={`${form.videoFileName} (${form.videoFileSize})`} onDelete={() => { setForm((p) => ({ ...p, videoFile: null, videoFileName: '', videoFileSize: '' })); setVideoSegments(null); }} />
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={handleOpenVideoEditor}
+                        startIcon={<PlayIcon />}
+                      >
+                        Edit / Trim
+                      </Button>
+                    </>
+                  )}
+                </Box>
+                {videoSegments && (
+                  <Chip label={`${videoSegments.segments.length} segment(s) saved`} color="success" size="small" sx={{ mt: 1 }} />
                 )}
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                   지원 형식: MP4, AVI, MOV, WMV (최대 {MAX_VIDEO_SIZE_MB}MB)
@@ -503,6 +555,16 @@ const CourseManagement = () => {
           <Button variant="contained" onClick={handleSave}>{editMode ? '수정' : '등록'}</Button>
         </DialogActions>
       </Dialog>
+
+      {/* ─── Video Editor Dialog ──────────────────────────────────── */}
+      <VideoEditorDialog
+        open={videoEditorOpen}
+        onClose={() => setVideoEditorOpen(false)}
+        videoUrl={form.videoUrl}
+        videoFile={form.videoFile}
+        videoType={form.videoType}
+        onSave={handleSaveVideoSegments}
+      />
 
       {/* ─── Preview Dialog ───────────────────────────────────────── */}
       <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="sm" fullWidth
