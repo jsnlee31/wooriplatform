@@ -35,6 +35,15 @@ const Header = ({ onMenuToggle, sidebarOpen }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
 
+  // Load custom logo from localStorage
+  const [customLogo, setCustomLogo] = React.useState(null);
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem('woori_site_logo');
+      if (saved) setCustomLogo(JSON.parse(saved));
+    } catch { /* ignore */ }
+  }, []);
+
   const handleProfileClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -101,7 +110,7 @@ const Header = ({ onMenuToggle, sidebarOpen }) => {
         >
           <Box
             component="img"
-            src="/logo.png"
+            src={customLogo?.imageUrl || '/logo.png'}
             alt="Woori Bank"
             sx={{
               height: 32,

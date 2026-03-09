@@ -9,6 +9,7 @@ import {
   Visibility as PreviewIcon, Campaign as BannerIcon, TextFields as TextIcon,
   Delete as DeleteIcon, Add as AddIcon, Edit as EditIcon,
   ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon,
+  BrandingWatermark as LogoIcon, Slideshow as SlideshowIcon,
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
 
@@ -20,6 +21,14 @@ const createDefaultPopup = (id) => ({
   imageUrl: '',
   linkUrl: '',
   linkText: '',
+});
+
+const createDefaultSlide = (id) => ({
+  id,
+  active: true,
+  title: '',
+  subtitle: '',
+  imageUrl: '',
 });
 
 const DEFAULT_POPUPS = [
@@ -40,6 +49,13 @@ const DEFAULT_FOOTER_BANNERS = [
   { id: 3, text: '📚 새로운 온라인 강좌 "AI 활용 실무"가 오픈되었습니다.', active: true },
 ];
 
+const DEFAULT_SLIDES = [
+  { id: 1, active: true, title: '우리은행 퇴직자 지원 프로그램', subtitle: '새로운 시작을 함께합니다', imageUrl: 'https://images.unsplash.com/photo-1560472355-536de3962603?w=800&h=450&fit=crop' },
+  { id: 2, active: true, title: '맞춤형 재취업 컨설팅', subtitle: '전문가와 함께하는 커리어 설계', imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&h=450&fit=crop' },
+  { id: 3, active: true, title: '온라인 교육 프로그램', subtitle: '언제 어디서나 학습하세요', imageUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=450&fit=crop' },
+  { id: 4, active: true, title: '창업 지원 서비스', subtitle: '성공적인 창업을 위한 첫걸음', imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=450&fit=crop' },
+];
+
 const BannerManagement = () => {
   const { showSuccess } = useNotification();
   const [tab, setTab] = useState(0);
@@ -47,14 +63,16 @@ const BannerManagement = () => {
   const [previewType, setPreviewType] = useState('popup');
   const [previewIndex, setPreviewIndex] = useState(0);
   const [editingIndex, setEditingIndex] = useState(null);
+  const [editingSlideIndex, setEditingSlideIndex] = useState(null);
   const imageInputRef = useRef(null);
+  const logoInputRef = useRef(null);
+  const slideImageInputRef = useRef(null);
 
-  // Load saved popup banners (now an array) or use defaults
+  // Load saved popup banners
   const [popups, setPopups] = useState(() => {
     try {
       const saved = localStorage.getItem('woori_popup_banners');
       if (saved) return JSON.parse(saved);
-      // Migrate from old single popup format
       const oldSaved = localStorage.getItem('woori_popup_banner');
       if (oldSaved) {
         const old = JSON.parse(oldSaved);
@@ -79,9 +97,25 @@ const BannerManagement = () => {
     return localStorage.getItem('woori_footer_active') !== 'false';
   });
 
+  // Load site logo
+  const [siteLogo, setSiteLogo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('woori_site_logo');
+      return saved ? JSON.parse(saved) : { imageUrl: '' };
+    } catch { return { imageUrl: '' }; }
+  });
+
+  // Load landing page slides
+  const [slides, setSlides] = useState(() => {
+    try {
+      const saved = localStorage.getItem('woori_landing_slides');
+      return saved ? JSON.parse(saved) : DEFAULT_SLIDES;
+    } catch { return DEFAULT_SLIDES; }
+  });
+
+  // ─── Save handlers ─────────────────────────────────
   const handleSavePopups = () => {
     localStorage.setItem('woori_popup_banners', JSON.stringify(popups));
-    // Also keep backward-compatible single key for Layout migration
     localStorage.removeItem('woori_popup_banner');
     showSuccess('팝업 배너가 저장되었습니다');
   };
@@ -93,6 +127,17 @@ const BannerManagement = () => {
     showSuccess('하단 배너가 저장되었습니다');
   };
 
+  const handleSaveLogo = () => {
+    localStorage.setItem('woori_site_logo', JSON.stringify(siteLogo));
+    showSuccess('로고가 저장되었습니다. 새로고침 후 반영됩니다.');
+  };
+
+  const handleSaveSlides = () => {
+    localStorage.setItem('woori_landing_slides', JSON.stringify(slides));
+    showSuccess('랜딩 배너가 저장되었습니다. 새로고침 후 반영됩니다.');
+  };
+
+  // ─── Popup handlers ─────────────────────────────────
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file || editingIndex === null) return;
@@ -119,6 +164,7 @@ const BannerManagement = () => {
     setPopups((prev) => prev.map((p, i) => i === index ? { ...p, [field]: value } : p));
   };
 
+  // ─── Footer handlers ─────────────────────────────────
   const addFooterBanner = () => {
     const newId = Math.max(0, ...footerBanners.map((b) => b.id)) + 1;
     setFooterBanners((prev) => [...prev, { id: newId, text: '', active: true }]);
@@ -132,6 +178,44 @@ const BannerManagement = () => {
     setFooterBanners((prev) => prev.map((b) => b.id === id ? { ...b, [field]: value } : b));
   };
 
+  // ─── Logo handler ─────────────────────────────────
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setSiteLogo({ imageUrl: ev.target.result });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // ─── Slide handlers ─────────────────────────────────
+  const addSlide = () => {
+    const newId = Math.max(0, ...slides.map((s) => s.id)) + 1;
+    setSlides((prev) => [...prev, createDefaultSlide(newId)]);
+    setEditingSlideIndex(slides.length);
+  };
+
+  const removeSlide = (index) => {
+    setSlides((prev) => prev.filter((_, i) => i !== index));
+    if (editingSlideIndex === index) setEditingSlideIndex(null);
+    else if (editingSlideIndex !== null && editingSlideIndex > index) setEditingSlideIndex(editingSlideIndex - 1);
+  };
+
+  const updateSlide = (index, field, value) => {
+    setSlides((prev) => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+  };
+
+  const handleSlideImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || editingSlideIndex === null) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      updateSlide(editingSlideIndex, 'imageUrl', ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const activePreviewPopups = popups.filter((p) => p.active);
 
   return (
@@ -139,16 +223,20 @@ const BannerManagement = () => {
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>배너 관리</Typography>
         <Typography variant="body2" color="text.secondary">
-          팝업 배너와 하단 롤링 배너를 관리합니다
+          팝업 배너, 하단 롤링 배너, 랜딩 배너, 사이트 로고를 관리합니다
         </Typography>
       </Box>
 
-      <Tabs value={tab} onChange={(_, v) => { setTab(v); setEditingIndex(null); }} sx={{ mb: 3, '& .MuiTab-root': { fontSize: '0.875rem' } }}>
+      <Tabs value={tab} onChange={(_, v) => { setTab(v); setEditingIndex(null); setEditingSlideIndex(null); }}
+        sx={{ mb: 3, '& .MuiTab-root': { fontSize: '0.875rem' } }}
+        variant="scrollable" scrollButtons="auto">
         <Tab icon={<BannerIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="팝업 배너" />
         <Tab icon={<TextIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="하단 롤링 배너" />
+        <Tab icon={<SlideshowIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="랜딩 배너" />
+        <Tab icon={<LogoIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="사이트 로고" />
       </Tabs>
 
-      {/* ─── Popup Banners ───────────────────────────────────────── */}
+      {/* ─── Tab 0: Popup Banners ─────────────────────────────── */}
       {tab === 0 && (
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -167,7 +255,6 @@ const BannerManagement = () => {
             </Box>
           </Box>
 
-          {/* Popup cards list */}
           <Grid container spacing={2} sx={{ mb: 2 }}>
             {popups.map((popup, index) => (
               <Grid item xs={12} sm={6} md={4} key={popup.id}>
@@ -203,8 +290,7 @@ const BannerManagement = () => {
                       편집
                     </Button>
                     <Box sx={{ flex: 1 }} />
-                    <IconButton size="small" color="error" onClick={() => removePopup(index)}
-                      disabled={popups.length <= 1}>
+                    <IconButton size="small" color="error" onClick={() => removePopup(index)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </CardActions>
@@ -212,7 +298,6 @@ const BannerManagement = () => {
               </Grid>
             ))}
 
-            {/* Add new popup card */}
             <Grid item xs={12} sm={6} md={4}>
               <Card variant="outlined" sx={{
                 borderRadius: '12px', borderStyle: 'dashed', display: 'flex',
@@ -228,7 +313,6 @@ const BannerManagement = () => {
             </Grid>
           </Grid>
 
-          {/* Edit form for selected popup */}
           {editingIndex !== null && popups[editingIndex] && (
             <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'primary.main', borderRadius: '12px' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -285,7 +369,7 @@ const BannerManagement = () => {
         </Box>
       )}
 
-      {/* ─── Footer Running Banner ──────────────────────────────── */}
+      {/* ─── Tab 1: Footer Running Banner ──────────────────────── */}
       {tab === 1 && (
         <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: '12px' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -334,12 +418,195 @@ const BannerManagement = () => {
         </Paper>
       )}
 
+      {/* ─── Tab 2: Landing Page Banner Slides ─────────────────── */}
+      {tab === 2 && (
+        <Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" fontWeight={600} fontSize="0.9375rem">
+              랜딩 페이지 배너 ({slides.length}개)
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button size="small" variant="outlined" startIcon={<PreviewIcon />}
+                onClick={() => { setPreviewType('slides'); setPreviewIndex(0); setPreviewOpen(true); }}
+                disabled={slides.filter((s) => s.active).length === 0}>
+                미리보기
+              </Button>
+              <Button size="small" variant="contained" startIcon={<SaveIcon />} onClick={handleSaveSlides}>
+                저장
+              </Button>
+            </Box>
+          </Box>
+
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            {slides.map((slide, index) => (
+              <Grid item xs={12} sm={6} md={4} key={slide.id}>
+                <Card variant="outlined" sx={{
+                  borderRadius: '12px',
+                  borderColor: editingSlideIndex === index ? 'primary.main' : 'divider',
+                  borderWidth: editingSlideIndex === index ? 2 : 1,
+                  opacity: slide.active ? 1 : 0.6,
+                }}>
+                  {slide.imageUrl && (
+                    <Box component="img" src={slide.imageUrl} alt="Slide"
+                      sx={{ width: '100%', height: 120, objectFit: 'cover' }} />
+                  )}
+                  {!slide.imageUrl && (
+                    <Box sx={{ width: '100%', height: 120, bgcolor: '#E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ImageIcon sx={{ fontSize: 40, color: 'text.disabled' }} />
+                    </Box>
+                  )}
+                  <CardContent sx={{ pb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                      <Chip label={slide.active ? '활성' : '비활성'} size="small"
+                        color={slide.active ? 'success' : 'default'} />
+                      <Switch size="small" checked={slide.active}
+                        onChange={(e) => updateSlide(index, 'active', e.target.checked)} />
+                    </Box>
+                    <Typography variant="subtitle2" fontWeight={600} noWrap>
+                      {slide.title || '(제목 없음)'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {slide.subtitle || '(부제목 없음)'}
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ pt: 0, px: 2, pb: 1.5 }}>
+                    <Button size="small" startIcon={<EditIcon />}
+                      onClick={() => setEditingSlideIndex(editingSlideIndex === index ? null : index)}>
+                      편집
+                    </Button>
+                    <Box sx={{ flex: 1 }} />
+                    <IconButton size="small" color="error" onClick={() => removeSlide(index)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+
+            <Grid item xs={12} sm={6} md={4}>
+              <Card variant="outlined" sx={{
+                borderRadius: '12px', borderStyle: 'dashed', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', minHeight: 200,
+                cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' },
+              }}
+                onClick={addSlide}>
+                <Box sx={{ textAlign: 'center', p: 2 }}>
+                  <AddIcon sx={{ fontSize: 32, color: 'text.secondary', mb: 0.5 }} />
+                  <Typography variant="body2" color="text.secondary">새 슬라이드 추가</Typography>
+                </Box>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {editingSlideIndex !== null && slides[editingSlideIndex] && (
+            <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'primary.main', borderRadius: '12px' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  슬라이드 #{editingSlideIndex + 1} 편집
+                </Typography>
+                <IconButton size="small" onClick={() => setEditingSlideIndex(null)}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField fullWidth label="제목" value={slides[editingSlideIndex].title}
+                    onChange={(e) => updateSlide(editingSlideIndex, 'title', e.target.value)} />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField fullWidth label="부제목" value={slides[editingSlideIndex].subtitle}
+                    onChange={(e) => updateSlide(editingSlideIndex, 'subtitle', e.target.value)} />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField fullWidth label="이미지 URL (외부 링크)" placeholder="https://..." value={slides[editingSlideIndex].imageUrl}
+                    onChange={(e) => updateSlide(editingSlideIndex, 'imageUrl', e.target.value)} />
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>또는 이미지 업로드</Typography>
+                  <input type="file" accept="image/*" ref={slideImageInputRef} hidden onChange={handleSlideImageUpload} />
+                  <Button variant="outlined" startIcon={<ImageIcon />} onClick={() => slideImageInputRef.current?.click()}>
+                    이미지 업로드
+                  </Button>
+                </Grid>
+              </Grid>
+            </Paper>
+          )}
+        </Box>
+      )}
+
+      {/* ─── Tab 3: Site Logo ──────────────────────────────────── */}
+      {tab === 3 && (
+        <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: '12px' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6" fontWeight={600} fontSize="0.9375rem">사이트 로고 설정</Typography>
+            <Button size="small" variant="contained" startIcon={<SaveIcon />} onClick={handleSaveLogo}>
+              저장
+            </Button>
+          </Box>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            헤더 좌측 상단에 표시되는 로고 이미지를 설정합니다. 저장 후 페이지를 새로고침하면 반영됩니다.
+          </Typography>
+
+          <input type="file" accept="image/*" ref={logoInputRef} hidden onChange={handleLogoUpload} />
+
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
+            {/* Current logo preview */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: '12px', textAlign: 'center', minWidth: 200 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>현재 로고</Typography>
+              {siteLogo.imageUrl ? (
+                <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                  <Box component="img" src={siteLogo.imageUrl} alt="Logo"
+                    sx={{ maxHeight: 60, maxWidth: 200, objectFit: 'contain' }} />
+                  <IconButton size="small"
+                    onClick={() => setSiteLogo({ imageUrl: '' })}
+                    sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'error.main', color: '#fff', width: 20, height: 20,
+                      '&:hover': { bgcolor: 'error.dark' } }}>
+                    <CloseIcon sx={{ fontSize: 12 }} />
+                  </IconButton>
+                </Box>
+              ) : (
+                <Box sx={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography variant="caption" color="text.disabled">기본 로고 사용 중</Typography>
+                </Box>
+              )}
+            </Paper>
+
+            {/* Header preview */}
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: '12px', flex: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>헤더 미리보기</Typography>
+              <Box sx={{ bgcolor: '#fff', border: '1px solid', borderColor: 'divider', borderRadius: '8px', p: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box component="img"
+                  src={siteLogo.imageUrl || '/logo.png'}
+                  alt="Logo Preview"
+                  sx={{ height: 32 }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+                <Typography variant="body1" sx={{ color: '#0047BA', fontWeight: 700 }}>
+                  퇴직지원 플랫폼
+                </Typography>
+              </Box>
+            </Paper>
+          </Box>
+
+          <Box sx={{ mt: 3 }}>
+            <Button variant="outlined" startIcon={<ImageIcon />} onClick={() => logoInputRef.current?.click()}>
+              로고 이미지 업로드
+            </Button>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+              권장: PNG 또는 SVG, 높이 32~40px, 투명 배경
+            </Typography>
+          </Box>
+        </Paper>
+      )}
+
       {/* ─── Preview Dialog ───────────────────────────────────────── */}
       <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="sm" fullWidth
         PaperProps={{ sx: { borderRadius: '12px' } }}>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" fontWeight={700} fontSize="1rem">
-            {previewType === 'popup' ? '팝업 배너 미리보기' : '하단 배너 미리보기'}
+            {previewType === 'popup' ? '팝업 배너 미리보기' : previewType === 'slides' ? '랜딩 배너 미리보기' : '하단 배너 미리보기'}
           </Typography>
           <IconButton size="small" onClick={() => setPreviewOpen(false)}>
             <CloseIcon fontSize="small" />
@@ -348,7 +615,6 @@ const BannerManagement = () => {
         <DialogContent>
           {previewType === 'popup' && activePreviewPopups.length > 0 && (
             <Box sx={{ textAlign: 'center', py: 2 }}>
-              {/* Navigation for multiple popups */}
               {activePreviewPopups.length > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 2 }}>
                   <IconButton size="small" disabled={previewIndex === 0}
@@ -364,7 +630,6 @@ const BannerManagement = () => {
                   </IconButton>
                 </Box>
               )}
-
               {(() => {
                 const popup = activePreviewPopups[previewIndex];
                 if (!popup) return null;
@@ -376,19 +641,50 @@ const BannerManagement = () => {
                     )}
                     <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>{popup.title || '(제목 없음)'}</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{popup.content || '(내용 없음)'}</Typography>
-                    {popup.linkText && (
-                      <Button variant="contained" size="small">{popup.linkText}</Button>
-                    )}
+                    {popup.linkText && <Button variant="contained" size="small">{popup.linkText}</Button>}
                   </>
                 );
               })()}
-
               <Divider sx={{ my: 2 }} />
               <Typography variant="caption" color="text.secondary">
                 활성화된 팝업: {activePreviewPopups.length}개
               </Typography>
             </Box>
           )}
+          {previewType === 'slides' && (() => {
+            const activeSlides = slides.filter((s) => s.active);
+            const slide = activeSlides[previewIndex];
+            if (!slide) return null;
+            return (
+              <Box sx={{ py: 2 }}>
+                {activeSlides.length > 1 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <IconButton size="small" disabled={previewIndex === 0}
+                      onClick={() => setPreviewIndex((i) => i - 1)}>
+                      <ArrowBackIcon fontSize="small" />
+                    </IconButton>
+                    <Typography variant="body2" fontWeight={600}>
+                      {previewIndex + 1} / {activeSlides.length}
+                    </Typography>
+                    <IconButton size="small" disabled={previewIndex >= activeSlides.length - 1}
+                      onClick={() => setPreviewIndex((i) => i + 1)}>
+                      <ArrowForwardIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                )}
+                <Box sx={{
+                  position: 'relative', borderRadius: '8px', overflow: 'hidden', height: 200,
+                  backgroundImage: slide.imageUrl ? `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5)), url(${slide.imageUrl})` : undefined,
+                  bgcolor: slide.imageUrl ? undefined : '#E5E7EB',
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', p: 2,
+                }}>
+                  <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>{slide.title}</Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>{slide.subtitle}</Typography>
+                </Box>
+              </Box>
+            );
+          })()}
           {previewType === 'footer' && (
             <Box sx={{ py: 2 }}>
               <Typography variant="subtitle2" sx={{ mb: 2 }}>미리보기 (스크롤 속도: {footerSpeed}초)</Typography>

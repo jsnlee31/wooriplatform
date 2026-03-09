@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -25,8 +25,8 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 
-// Demo banner slides (replace with real content / API data)
-const bannerSlides = [
+// Default banner slides (can be overridden via admin BannerManagement)
+const DEFAULT_SLIDES = [
   {
     type: 'image',
     url: 'https://images.unsplash.com/photo-1560472355-536de3962603?w=800&h=450&fit=crop',
@@ -53,12 +53,68 @@ const bannerSlides = [
   },
 ];
 
+// Load slides from localStorage (admin-managed) or use defaults
+const loadBannerSlides = () => {
+  try {
+    const saved = localStorage.getItem('woori_landing_slides');
+    if (saved) {
+      const slides = JSON.parse(saved).filter((s) => s.active);
+      if (slides.length > 0) {
+        return slides.map((s) => ({
+          type: 'image',
+          url: s.imageUrl,
+          title: s.title,
+          subtitle: s.subtitle,
+        }));
+      }
+    }
+  } catch { /* ignore */ }
+  return DEFAULT_SLIDES;
+};
+
 const footerMessages = [
   '우리은행 퇴직자 통합 지원 플랫폼',
   '재취업 컨설팅 | 교육 프로그램 | 창업 지원 | 건강관리',
   '새로운 시작, 우리가 함께합니다',
   '문의: support@woori.com | 1588-0000',
 ];
+
+// Extracted as a standalone component so it does NOT re-render when the carousel changes
+const FooterMarquee = React.memo(() => (
+  <Box
+    sx={{
+      backgroundColor: '#002D72',
+      color: 'rgba(255,255,255,0.85)',
+      py: 0.75,
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      flexShrink: 0,
+    }}
+  >
+    <Box
+      sx={{
+        display: 'inline-block',
+        whiteSpace: 'nowrap',
+        animation: 'marquee 30s linear infinite',
+        '@keyframes marquee': {
+          '0%': { transform: 'translateX(100vw)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+      }}
+    >
+      <Typography variant="caption" component="span" sx={{ letterSpacing: '0.02em' }}>
+        {footerMessages.map((msg, i) => (
+          <React.Fragment key={i}>
+            {msg}
+            {i < footerMessages.length - 1 && (
+              <Box component="span" sx={{ mx: 3, opacity: 0.4 }}>|</Box>
+            )}
+          </React.Fragment>
+        ))}
+      </Typography>
+    </Box>
+  </Box>
+));
 
 const LandingPage = () => {
   const { t } = useTranslation();
@@ -72,6 +128,18 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Load banner slides from admin settings
+  const bannerSlides = useMemo(() => loadBannerSlides(), []);
+
+  // Load custom logo from localStorage
+  const customLogo = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('woori_site_logo');
+      if (saved) return JSON.parse(saved);
+    } catch { /* ignore */ }
+    return null;
+  }, []);
 
   const {
     register,
@@ -127,7 +195,7 @@ const LandingPage = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box
           component="img"
-          src="/logo-white.png"
+          src={customLogo?.imageUrl || '/logo-white.png'}
           alt="Woori Bank"
           sx={{ height: { xs: 28, md: 36 } }}
           onError={(e) => { e.target.style.display = 'none'; }}
@@ -427,41 +495,6 @@ const LandingPage = () => {
           <Link to="/register" style={{ color: '#0047BA', fontWeight: 500, textDecoration: 'none' }}>
             {t('auth.register')}
           </Link>
-        </Typography>
-      </Box>
-    </Box>
-  );
-
-  const FooterMarquee = () => (
-    <Box
-      sx={{
-        backgroundColor: '#002D72',
-        color: 'rgba(255,255,255,0.85)',
-        py: 0.75,
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        flexShrink: 0,
-      }}
-    >
-      <Box
-        sx={{
-          display: 'inline-block',
-          animation: 'marquee 30s linear infinite',
-          '@keyframes marquee': {
-            '0%': { transform: 'translateX(100vw)' },
-            '100%': { transform: 'translateX(-100%)' },
-          },
-        }}
-      >
-        <Typography variant="caption" component="span" sx={{ letterSpacing: '0.02em' }}>
-          {footerMessages.map((msg, i) => (
-            <React.Fragment key={i}>
-              {msg}
-              {i < footerMessages.length - 1 && (
-                <Box component="span" sx={{ mx: 3, opacity: 0.4 }}>|</Box>
-              )}
-            </React.Fragment>
-          ))}
         </Typography>
       </Box>
     </Box>
