@@ -32,6 +32,10 @@ const FAQ = lazy(() => import('./pages/support/FAQ'));
 const Inquiry = lazy(() => import('./pages/support/Inquiry'));
 const InquiryList = lazy(() => import('./pages/support/InquiryList'));
 
+// Consultation pages
+const ConsultationBooking = lazy(() => import('./pages/consultations/ConsultationBooking'));
+const ConsultantSchedule = lazy(() => import('./pages/consultations/ConsultantSchedule'));
+
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const UserManagement = lazy(() => import('./pages/admin/UserManagement'));
@@ -42,6 +46,7 @@ const AnnouncementManagement = lazy(() => import('./pages/admin/AnnouncementMana
 const FAQManagement = lazy(() => import('./pages/admin/FAQManagement'));
 const InquiryManagement = lazy(() => import('./pages/admin/InquiryManagement'));
 const BannerManagement = lazy(() => import('./pages/admin/BannerManagement'));
+const ConsultationManagement = lazy(() => import('./pages/admin/ConsultationManagement'));
 
 // Loading component
 const LoadingFallback = () => (
@@ -180,6 +185,14 @@ const AppRoutes = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/consultations"
+                    element={
+                      <ProtectedRoute roles={['admin', 'hr_manager']}>
+                        <ConsultationManagement />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="*" element={<Navigate to="/admin" replace />} />
                 </Routes>
               </AdminLayout>
@@ -210,6 +223,10 @@ const AppRoutes = () => {
                   <Route path="/activities/applications" element={<MyActivities />} />
                   <Route path="/activities/consultations" element={<MyActivities />} />
                   <Route path="/activities/courses" element={<MyActivities />} />
+
+                  {/* Consultations */}
+                  <Route path="/consultations/booking" element={<ConsultationBooking />} />
+                  <Route path="/consultations/schedule" element={<ConsultantSchedule />} />
 
                   {/* Jobs */}
                   <Route path="/jobs" element={<JobList />} />

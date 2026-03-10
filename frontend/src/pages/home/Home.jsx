@@ -26,7 +26,7 @@ import {
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
-import { Responsive, WidthProvider } from 'react-grid-layout';
+import { ResponsiveGridLayout as RGLResponsive, useContainerWidth } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { useAuth } from '../../contexts/AuthContext';
@@ -34,7 +34,15 @@ import { dashboardAPI } from '../../services/api';
 import StatusBadge from '../../components/common/StatusBadge';
 import CategoryBadge from '../../components/common/CategoryBadge';
 
-const ResponsiveGridLayout = WidthProvider(Responsive);
+// Wrap ResponsiveGridLayout with container width measurement
+const ResponsiveGridLayout = React.forwardRef(function WrappedRGL(props, ref) {
+  const { containerRef, width } = useContainerWidth();
+  return (
+    <div ref={containerRef}>
+      {width > 0 && <RGLResponsive {...props} ref={ref} width={width} />}
+    </div>
+  );
+});
 
 const LAYOUT_STORAGE_KEY = 'woori_dashboard_layout';
 

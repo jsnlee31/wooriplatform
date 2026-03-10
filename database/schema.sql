@@ -107,6 +107,41 @@ CREATE TABLE consultations (
     completed_at TIMESTAMP WITH TIME ZONE
 );
 
+-- Consultation method enum
+CREATE TYPE consultation_method AS ENUM ('온라인', '오프라인', '전화');
+
+-- Add method column to consultations
+ALTER TABLE consultations ADD COLUMN method consultation_method DEFAULT '온라인';
+
+-- Consultant availability slots table (30-min sessions)
+CREATE TABLE consultant_availability (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    consultant_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    available_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_booked BOOLEAN DEFAULT FALSE,
+    consultation_id UUID REFERENCES consultations(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_consultant_availability_consultant ON consultant_availability(consultant_id);
+CREATE INDEX idx_consultant_availability_date ON consultant_availability(available_date);
+
+-- Consultation records (notes, files per session)
+CREATE TABLE consultation_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    consultation_id UUID REFERENCES consultations(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    record_type VARCHAR(20) NOT NULL DEFAULT 'text',
+    content TEXT,
+    file_url VARCHAR(500),
+    file_name VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_consultation_records_consultation ON consultation_records(consultation_id);
+
 -- =====================================================
 -- LEARNING & COURSES
 -- =====================================================

@@ -3,7 +3,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Button, TextField, InputAdornment, IconButton, Chip, Menu, MenuItem,
   Dialog, DialogTitle, DialogContent, DialogActions, Grid, FormControl,
-  InputLabel, Select, Divider, Avatar, Tabs, Tab, LinearProgress, Card, CardContent,
+  InputLabel, Select, Divider, Avatar, Tabs, Tab, LinearProgress, Card,
 } from '@mui/material';
 import {
   Search as SearchIcon, MoreVert as MoreVertIcon, Edit as EditIcon,

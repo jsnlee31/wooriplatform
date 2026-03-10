@@ -149,11 +149,11 @@ const LandingPage = () => {
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
-  }, []);
+  }, [bannerSlides.length]);
 
   const prevSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length);
-  }, []);
+  }, [bannerSlides.length]);
 
   useEffect(() => {
     const timer = setInterval(nextSlide, 5000);

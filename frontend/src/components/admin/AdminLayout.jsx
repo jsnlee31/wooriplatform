@@ -48,6 +48,7 @@ const allNavItems = [
   { id: 'users', label: '사용자 관리', icon: <PeopleIcon />, path: '/admin/users', roles: ['admin'] },
   { id: 'programs', label: '프로그램 관리', icon: <ProgramIcon />, path: '/admin/programs', roles: ['admin', 'instructor'] },
   { id: 'courses', label: '강의 관리', icon: <CourseIcon />, path: '/admin/courses', roles: ['admin', 'instructor'] },
+  { id: 'consultations', label: '상담 관리', icon: <InquiryIcon />, path: '/admin/consultations', roles: ['admin', 'hr_manager'] },
   { id: 'jobs', label: '채용 관리', icon: <JobIcon />, path: '/admin/jobs', roles: ['admin'] },
   { id: 'announcements', label: '공지사항 관리', icon: <AnnouncementIcon />, path: '/admin/announcements', roles: ['admin'] },
   { id: 'faq', label: 'FAQ 관리', icon: <FaqIcon />, path: '/admin/faq', roles: ['admin'] },

@@ -68,10 +68,21 @@ export const programsAPI = {
 export const consultationsAPI = {
   getMine: () => api.get('/consultations'),
   getAll: () => api.get('/consultations/all'),
+  getById: (id) => api.get(`/consultations/${id}`),
   book: (data) => api.post('/consultations', data),
   update: (id, data) => api.put(`/consultations/${id}`, data),
   cancel: (id) => api.delete(`/consultations/${id}`),
   getConsultants: () => api.get('/consultations/consultants'),
+  // Availability
+  getAvailability: (consultantId, params) => api.get(`/consultations/availability/${consultantId}`, { params }),
+  getMyAvailability: (params) => api.get('/consultations/my-availability', { params }),
+  publishAvailability: (data) => api.post('/consultations/availability', data),
+  deleteAvailability: (id) => api.delete(`/consultations/availability/${id}`),
+  // Records
+  addRecord: (id, data) => api.post(`/consultations/${id}/records`, data),
+  // Admin
+  getAdminStats: () => api.get('/consultations/admin/stats'),
+  getByConsultant: (consultantId) => api.get(`/consultations/admin/by-consultant/${consultantId}`),
 };
 
 // Courses API
