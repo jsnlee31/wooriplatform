@@ -1,8 +1,8 @@
 import { createTheme } from '@mui/material/styles';
 
-// Woori Bank Design System Colors
-const wooriColors = {
-  primary: '#0047BA',      // Woori Blue - main buttons, links, emphasis
+// Asian Games Platform Design System Colors
+const asianGamesColors = {
+  primary: '#0047BA',      // Primary blue - main buttons, links, emphasis
   background: '#FFFFFF',   // Full page background
   sectionBg: '#F8F9FA',    // Section backgrounds, cards
   text: '#333333',         // Body text
@@ -41,7 +41,7 @@ export const statusColors = {
 const theme = createTheme({
   palette: {
     primary: {
-      main: wooriColors.primary,
+      main: asianGamesColors.primary,
       light: '#3366CC',
       dark: '#003399',
       contrastText: '#FFFFFF',
@@ -52,25 +52,25 @@ const theme = createTheme({
       dark: '#4B5563',
     },
     background: {
-      default: wooriColors.background,
-      paper: wooriColors.background,
+      default: asianGamesColors.background,
+      paper: asianGamesColors.background,
     },
     text: {
-      primary: wooriColors.text,
+      primary: asianGamesColors.text,
       secondary: '#6B7280',
     },
-    divider: wooriColors.border,
+    divider: asianGamesColors.border,
     success: {
-      main: wooriColors.success,
+      main: asianGamesColors.success,
     },
     warning: {
-      main: wooriColors.warning,
+      main: asianGamesColors.warning,
     },
     error: {
-      main: wooriColors.error,
+      main: asianGamesColors.error,
     },
     info: {
-      main: wooriColors.info,
+      main: asianGamesColors.info,
     },
   },
   typography: {
@@ -131,9 +131,9 @@ const theme = createTheme({
           fontWeight: 500,
         },
         outlined: {
-          borderColor: wooriColors.primary,
+          borderColor: asianGamesColors.primary,
           '&:hover': {
-            backgroundColor: wooriColors.primary,
+            backgroundColor: asianGamesColors.primary,
             color: '#FFFFFF',
           },
         },
@@ -150,7 +150,7 @@ const theme = createTheme({
         root: {
           borderRadius: 4,
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          border: `1px solid ${wooriColors.border}`,
+          border: `1px solid ${asianGamesColors.border}`,
         },
       },
     },
@@ -167,10 +167,10 @@ const theme = createTheme({
     MuiTableHead: {
       styleOverrides: {
         root: {
-          backgroundColor: wooriColors.sectionBg,
+          backgroundColor: asianGamesColors.sectionBg,
           '& .MuiTableCell-head': {
             fontWeight: 600,
-            color: wooriColors.text,
+            color: asianGamesColors.text,
           },
         },
       },
@@ -178,7 +178,7 @@ const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: `1px solid ${wooriColors.border}`,
+          borderBottom: `1px solid ${asianGamesColors.border}`,
           padding: '12px 16px',
         },
       },
@@ -210,7 +210,7 @@ const theme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          borderRight: `1px solid ${wooriColors.border}`,
+          borderRight: `1px solid ${asianGamesColors.border}`,
         },
       },
     },
@@ -227,4 +227,4 @@ const theme = createTheme({
 });
 
 export default theme;
-export { wooriColors };
+export { asianGamesColors };

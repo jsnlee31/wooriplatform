@@ -50,7 +50,7 @@ const DEFAULT_FOOTER_BANNERS = [
 ];
 
 const DEFAULT_SLIDES = [
-  { id: 1, active: true, title: '우리은행 퇴직자 지원 프로그램', subtitle: '새로운 시작을 함께합니다', imageUrl: 'https://images.unsplash.com/photo-1560472355-536de3962603?w=800&h=450&fit=crop' },
+  { id: 1, active: true, title: '2026 Aichi-Nagoya Asian Games Delegation', subtitle: 'Training, recovery, and support for the national team', imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&h=450&fit=crop' },
   { id: 2, active: true, title: '맞춤형 재취업 컨설팅', subtitle: '전문가와 함께하는 커리어 설계', imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&h=450&fit=crop' },
   { id: 3, active: true, title: '온라인 교육 프로그램', subtitle: '언제 어디서나 학습하세요', imageUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=450&fit=crop' },
   { id: 4, active: true, title: '창업 지원 서비스', subtitle: '성공적인 창업을 위한 첫걸음', imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=450&fit=crop' },
@@ -71,9 +71,9 @@ const BannerManagement = () => {
   // Load saved popup banners
   const [popups, setPopups] = useState(() => {
     try {
-      const saved = localStorage.getItem('woori_popup_banners');
+      const saved = localStorage.getItem('asiangames_popup_banners');
       if (saved) return JSON.parse(saved);
-      const oldSaved = localStorage.getItem('woori_popup_banner');
+      const oldSaved = localStorage.getItem('asiangames_popup_banner');
       if (oldSaved) {
         const old = JSON.parse(oldSaved);
         return [{ ...old, id: 1 }];
@@ -84,23 +84,23 @@ const BannerManagement = () => {
 
   const [footerBanners, setFooterBanners] = useState(() => {
     try {
-      const saved = localStorage.getItem('woori_footer_banners');
+      const saved = localStorage.getItem('asiangames_footer_banners');
       return saved ? JSON.parse(saved) : DEFAULT_FOOTER_BANNERS;
     } catch { return DEFAULT_FOOTER_BANNERS; }
   });
 
   const [footerSpeed, setFooterSpeed] = useState(() => {
-    return parseInt(localStorage.getItem('woori_footer_speed') || '30', 10);
+    return parseInt(localStorage.getItem('asiangames_footer_speed') || '30', 10);
   });
 
   const [footerActive, setFooterActive] = useState(() => {
-    return localStorage.getItem('woori_footer_active') !== 'false';
+    return localStorage.getItem('asiangames_footer_active') !== 'false';
   });
 
   // Load site logo
   const [siteLogo, setSiteLogo] = useState(() => {
     try {
-      const saved = localStorage.getItem('woori_site_logo');
+      const saved = localStorage.getItem('asiangames_site_logo');
       return saved ? JSON.parse(saved) : { imageUrl: '' };
     } catch { return { imageUrl: '' }; }
   });
@@ -108,32 +108,32 @@ const BannerManagement = () => {
   // Load landing page slides
   const [slides, setSlides] = useState(() => {
     try {
-      const saved = localStorage.getItem('woori_landing_slides');
+      const saved = localStorage.getItem('asiangames_landing_slides');
       return saved ? JSON.parse(saved) : DEFAULT_SLIDES;
     } catch { return DEFAULT_SLIDES; }
   });
 
   // ─── Save handlers ─────────────────────────────────
   const handleSavePopups = () => {
-    localStorage.setItem('woori_popup_banners', JSON.stringify(popups));
-    localStorage.removeItem('woori_popup_banner');
+    localStorage.setItem('asiangames_popup_banners', JSON.stringify(popups));
+    localStorage.removeItem('asiangames_popup_banner');
     showSuccess('팝업 배너가 저장되었습니다');
   };
 
   const handleSaveFooter = () => {
-    localStorage.setItem('woori_footer_banners', JSON.stringify(footerBanners));
-    localStorage.setItem('woori_footer_speed', String(footerSpeed));
-    localStorage.setItem('woori_footer_active', String(footerActive));
+    localStorage.setItem('asiangames_footer_banners', JSON.stringify(footerBanners));
+    localStorage.setItem('asiangames_footer_speed', String(footerSpeed));
+    localStorage.setItem('asiangames_footer_active', String(footerActive));
     showSuccess('하단 배너가 저장되었습니다');
   };
 
   const handleSaveLogo = () => {
-    localStorage.setItem('woori_site_logo', JSON.stringify(siteLogo));
+    localStorage.setItem('asiangames_site_logo', JSON.stringify(siteLogo));
     showSuccess('로고가 저장되었습니다. 새로고침 후 반영됩니다.');
   };
 
   const handleSaveSlides = () => {
-    localStorage.setItem('woori_landing_slides', JSON.stringify(slides));
+    localStorage.setItem('asiangames_landing_slides', JSON.stringify(slides));
     showSuccess('랜딩 배너가 저장되었습니다. 새로고침 후 반영됩니다.');
   };
 

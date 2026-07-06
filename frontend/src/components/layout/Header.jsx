@@ -39,7 +39,7 @@ const Header = ({ onMenuToggle, sidebarOpen }) => {
   const [customLogo, setCustomLogo] = React.useState(null);
   React.useEffect(() => {
     try {
-      const saved = localStorage.getItem('woori_site_logo');
+      const saved = localStorage.getItem('asiangames_site_logo');
       if (saved) setCustomLogo(JSON.parse(saved));
     } catch { /* ignore */ }
   }, []);
@@ -111,7 +111,7 @@ const Header = ({ onMenuToggle, sidebarOpen }) => {
           <Box
             component="img"
             src={customLogo?.imageUrl || '/logo.png'}
-            alt="Woori Bank"
+            alt="Asian Games Delegation"
             sx={{
               height: 32,
               mr: 1,

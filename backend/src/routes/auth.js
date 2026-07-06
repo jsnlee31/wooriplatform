@@ -5,6 +5,48 @@ const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
 const { generateToken, authenticate } = require('../middleware/auth');
+const { normalizeRole } = require('../utils/roles');
+
+// Create the first admin only when the database has no admin yet.
+router.post('/bootstrap-admin', [
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 }),
+  body('name_ko').notEmpty().trim(),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const existingAdmin = await db.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+    if (existingAdmin.rows.length > 0) {
+      return res.status(403).json({ error: 'Admin bootstrap is already locked' });
+    }
+
+    const { email, password, name_ko, name_en } = req.body;
+    const existingUser = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    const result = await db.query(
+      `INSERT INTO users (email, password_hash, name_ko, name_en, role, status)
+       VALUES ($1, $2, $3, $4, 'admin', 'active')
+       RETURNING id, email, name_ko, name_en, role, status`,
+      [email, passwordHash, name_ko, name_en]
+    );
+
+    const user = result.rows[0];
+    const token = generateToken(user);
+    res.status(201).json({ message: 'Admin created', user, token });
+  } catch (error) {
+    console.error('Bootstrap admin error:', error);
+    res.status(500).json({ error: 'Failed to bootstrap admin' });
+  }
+});
 
 // Register new user
 router.post('/register', [
@@ -36,10 +78,10 @@ router.post('/register', [
 
     // Create user
     const result = await db.query(
-      `INSERT INTO users (email, password_hash, name_ko, name_en, employee_id, phone)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (email, password_hash, name_ko, name_en, employee_id, phone, role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, email, name_ko, name_en, role, status`,
-      [email, passwordHash, name_ko, name_en, employee_id, phone]
+      [email, passwordHash, name_ko, name_en, employee_id, phone, normalizeRole('user')]
     );
 
     const user = result.rows[0];
@@ -153,7 +195,7 @@ router.get('/me', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(result.rows[0]);
+    res.json({ user: result.rows[0] });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to get user' });

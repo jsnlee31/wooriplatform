@@ -1,7 +1,7 @@
 {
-  "name": "woori-platform-backend",
+  "name": "asiangames-platform-backend",
   "version": "1.0.0",
-  "description": "Woori Bank Retired Employee Support Platform API",
+  "description": "2026 Asian Games Delegation Platform API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -16,6 +16,7 @@
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "passport-google-oauth20": "^2.0.0",
     "passport-oauth2": "^1.8.0",
     "express-validator": "^7.0.1",

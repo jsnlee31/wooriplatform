@@ -133,7 +133,7 @@ const AdminLayout = ({ children }) => {
             </Box>
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '0.02em' }}>
-                Woori CMS
+                Asian Games CMS
               </Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.65rem' }}>
                 Content Management
@@ -337,7 +337,7 @@ const AdminLayout = ({ children }) => {
               >
                 <Box sx={{ px: 2, py: 1.5 }}>
                   <Typography variant="subtitle2">{user?.name_ko || user?.name || '관리자'}</Typography>
-                  <Typography variant="caption" color="text.secondary">{user?.email || 'admin@woori.com'}</Typography>
+                  <Typography variant="caption" color="text.secondary">{user?.email || 'admin@asiangames.com'}</Typography>
                 </Box>
                 <Divider />
                 <MenuItem onClick={() => { setAnchorEl(null); navigate('/'); }}>

@@ -85,6 +85,18 @@ export const consultationsAPI = {
   getByConsultant: (consultantId) => api.get(`/consultations/admin/by-consultant/${consultantId}`),
 };
 
+// Users API
+export const usersAPI = {
+  getAll: (params) => api.get('/users', { params }),
+  getById: (id) => api.get(`/users/${id}`),
+  create: (data) => api.post('/users', data),
+  update: (id, data) => api.put(`/users/${id}`, data),
+  delete: (id) => api.delete(`/users/${id}`),
+  changeStatus: (id, status) => api.put(`/users/${id}/status`, { status }),
+  getSkills: (id) => api.get(`/users/${id}/skills`),
+  updateSkills: (id, data) => api.post(`/users/${id}/skills`, data),
+};
+
 // Courses API
 export const coursesAPI = {
   getAll: (params) => api.get('/courses', { params }),
@@ -163,15 +175,6 @@ export const dashboardAPI = {
   getHome: () => api.get('/dashboard/home'),
   getStats: () => api.get('/dashboard/stats'),
   getCalendar: (params) => api.get('/dashboard/calendar', { params }),
-};
-
-// Users API
-export const usersAPI = {
-  getAll: (params) => api.get('/users', { params }),
-  getById: (id) => api.get(`/users/${id}`),
-  update: (id, data) => api.put(`/users/${id}`, data),
-  getSkills: (id) => api.get(`/users/${id}/skills`),
-  updateSkills: (id, data) => api.post(`/users/${id}/skills`, data),
 };
 
 export default api;

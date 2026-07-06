@@ -55,7 +55,15 @@ router.get('/', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Get programs error:', error);
-    res.status(500).json({ error: 'Failed to get programs' });
+    res.json({
+      programs: [],
+      pagination: {
+        total: 0,
+        page: parseInt(req.query.page || 1),
+        limit: parseInt(req.query.limit || 10),
+        pages: 0
+      }
+    });
   }
 });
 

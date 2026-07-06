@@ -30,11 +30,11 @@ const Layout = ({ children }) => {
     // Load popup banners (new multi-format or old single format)
     try {
       let popupData = [];
-      const savedMulti = localStorage.getItem('woori_popup_banners');
+      const savedMulti = localStorage.getItem('asiangames_popup_banners');
       if (savedMulti) {
         popupData = JSON.parse(savedMulti);
       } else {
-        const savedSingle = localStorage.getItem('woori_popup_banner');
+        const savedSingle = localStorage.getItem('asiangames_popup_banner');
         if (savedSingle) {
           const single = JSON.parse(savedSingle);
           popupData = [{ ...single, id: 1 }];
@@ -45,7 +45,7 @@ const Layout = ({ children }) => {
       const activePopups = popupData.filter((p) => p.active);
 
       if (activePopups.length > 0) {
-        const dismissed = localStorage.getItem('woori_popup_dismissed');
+        const dismissed = localStorage.getItem('asiangames_popup_dismissed');
         let shouldShow = true;
         if (dismissed) {
           const dismissedDate = new Date(dismissed).toDateString();
@@ -57,7 +57,7 @@ const Layout = ({ children }) => {
           setCurrentPopupIndex(0);
           setPopupOpen(true);
         }
-      } else if (!savedMulti && !localStorage.getItem('woori_popup_banner')) {
+      } else if (!savedMulti && !localStorage.getItem('asiangames_popup_banner')) {
         // Default popup if none saved
         setPopups([{
           id: 0,
@@ -74,11 +74,11 @@ const Layout = ({ children }) => {
 
     // Load footer banners
     try {
-      const active = localStorage.getItem('woori_footer_active');
+      const active = localStorage.getItem('asiangames_footer_active');
       setFooterActive(active !== 'false');
-      const speed = localStorage.getItem('woori_footer_speed');
+      const speed = localStorage.getItem('asiangames_footer_speed');
       setFooterSpeed(parseInt(speed || '30', 10));
-      const saved = localStorage.getItem('woori_footer_banners');
+      const saved = localStorage.getItem('asiangames_footer_banners');
       if (saved) {
         setFooterBanners(JSON.parse(saved).filter((b) => b.active && b.text));
       } else {
@@ -94,7 +94,7 @@ const Layout = ({ children }) => {
 
   const handleClosePopup = () => {
     if (dontShowToday) {
-      localStorage.setItem('woori_popup_dismissed', new Date().toISOString());
+      localStorage.setItem('asiangames_popup_dismissed', new Date().toISOString());
     }
     setPopupOpen(false);
   };

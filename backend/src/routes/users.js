@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
+const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
 const { authenticate, authorize } = require('../middleware/auth');
+const { normalizeRole, canManageRole, ROLES } = require('../utils/roles');
 
 // Get all users (admin only)
 router.get('/', authenticate, authorize('admin', 'hr_manager'), async (req, res) => {
@@ -61,6 +64,71 @@ router.get('/', authenticate, authorize('admin', 'hr_manager'), async (req, res)
   }
 });
 
+// Create user, sub-admin, lecturer, or admin account.
+router.post('/', authenticate, authorize('admin', 'hr_manager'), [
+  body('email').isEmail().normalizeEmail(),
+  body('password').optional().isLength({ min: 8 }),
+  body('name_ko').notEmpty().trim(),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {
+      email,
+      password,
+      name_ko,
+      name_en,
+      employee_id,
+      phone,
+      role = ROLES.USER,
+      status = 'active',
+      department,
+      position,
+      retirement_date,
+    } = req.body;
+
+    const targetRole = normalizeRole(role);
+    if (!canManageRole(req.user.role, targetRole)) {
+      return res.status(403).json({ error: 'You cannot create this role' });
+    }
+
+    const existingUser = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+
+    const initialPassword = password || Math.random().toString(36).slice(2, 12) + 'A1!';
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(initialPassword, salt);
+
+    const result = await db.query(
+      `INSERT INTO users (
+        email, password_hash, name_ko, name_en, employee_id, phone, role, status,
+        department, position, retirement_date
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING id, email, employee_id, name_ko, name_en, role, status,
+                phone, department, position, retirement_date, created_at`,
+      [
+        email, passwordHash, name_ko, name_en, employee_id, phone, targetRole, status,
+        department, position, retirement_date || null,
+      ]
+    );
+
+    res.status(201).json({
+      message: 'User created',
+      user: result.rows[0],
+      temporaryPassword: password ? undefined : initialPassword,
+    });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
 // Get user by ID
 router.get('/:id', authenticate, async (req, res) => {
   try {
@@ -91,10 +159,20 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Update user (admin only)
-router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('admin', 'hr_manager'), async (req, res) => {
   try {
     const { id } = req.params;
     const { role, status, department, position } = req.body;
+    const targetRole = role ? normalizeRole(role) : undefined;
+
+    const existing = await db.query('SELECT role FROM users WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!canManageRole(req.user.role, targetRole || existing.rows[0].role)) {
+      return res.status(403).json({ error: 'You cannot manage this role' });
+    }
 
     const result = await db.query(
       `UPDATE users
@@ -105,7 +183,7 @@ router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
            updated_at = CURRENT_TIMESTAMP
        WHERE id = $5
        RETURNING id, email, name_ko, name_en, role, status`,
-      [role, status, department, position, id]
+      [targetRole, status, department, position, id]
     );
 
     if (result.rows.length === 0) {

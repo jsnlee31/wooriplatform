@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Woori Bank Retiree Support Platform",
+    "appName": "2026 Aichi-Nagoya Asian Games Delegation Platform",
     "loading": "Loading...",
     "error": "An error occurred",
     "save": "Save",
@@ -179,7 +179,7 @@
     "event": "Event"
   },
   "footer": {
-    "copyright": "© {year} Woori Bank. All rights reserved.",
+    "copyright": "© {year} 2026 Asian Games Delegation Platform. All rights reserved.",
     "contact": "Contact",
     "address": "Address",
     "privacyPolicy": "Privacy Policy",

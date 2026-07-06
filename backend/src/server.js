@@ -17,6 +17,7 @@ const qaRoutes = require('./routes/qa');
 const faqRoutes = require('./routes/faq');
 const inquiryRoutes = require('./routes/inquiries');
 const dashboardRoutes = require('./routes/dashboard');
+const resumeRoutes = require('./routes/resumes');
 
 // Initialize express app
 const app = express();
@@ -65,6 +66,7 @@ app.use('/api/qa', qaRoutes);
 app.use('/api/faq', faqRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/resumes', resumeRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -88,9 +90,11 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = app;
